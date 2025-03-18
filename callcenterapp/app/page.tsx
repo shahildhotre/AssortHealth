@@ -15,6 +15,23 @@ function TranscriptModal({ onShowTranscript }: { onShowTranscript: (transcript: 
   );
 }
 
+// Add PatientInfoModal component
+function PatientInfoModal({ onShowPatientInfo }: { onShowPatientInfo: (patientInfo: any) => void }) {
+  return (
+    <dialog id="patient-info-modal" className="rounded-lg p-4 w-full max-w-2xl">
+      <div id="patient-info-content" className="mb-4">
+        <h2 className="text-xl font-bold mb-4">Patient Information</h2>
+        <div className="space-y-2">
+          <div id="patient-details"></div>
+        </div>
+      </div>
+      <form method="dialog" className="text-right">
+        <button className="bg-blue-500 text-white px-4 py-2 rounded">Close</button>
+      </form>
+    </dialog>
+  );
+}
+
 // Remove the async from the default export since we're making it a client component
 export default function Home() {
   const [callHistory, setCallHistory] = useState<any[]>([]);
@@ -127,6 +144,33 @@ export default function Home() {
     }
   };
 
+  const showPatientInfo = (patientInfo: any) => {
+    try {
+      const modal = document.getElementById('patient-info-modal') as HTMLDialogElement;
+      const detailsContainer = document.getElementById('patient-details');
+      
+      if (!modal || !detailsContainer) return;
+      
+      // Clear previous content
+      detailsContainer.innerHTML = '';
+      
+      // Create formatted display of patient info
+      Object.entries(patientInfo).forEach(([key, value]) => {
+        const row = document.createElement('div');
+        row.className = 'mb-2';
+        row.innerHTML = `
+          <span class="font-semibold">${key.replace(/_/g, ' ').charAt(0).toUpperCase() + key.slice(1)}: </span>
+          <span>${value}</span>
+        `;
+        detailsContainer.appendChild(row);
+      });
+      
+      modal.showModal();
+    } catch (e) {
+      console.error('Error showing patient info:', e);
+    }
+  };
+
   return (
     <main className="min-h-screen p-4">
       <header className="mb-8">
@@ -135,6 +179,7 @@ export default function Home() {
 
       {/* Move modal to client component */}
       <TranscriptModal onShowTranscript={showTranscript} />
+      <PatientInfoModal onShowPatientInfo={showPatientInfo} />
 
       {/* Call History Table */}
       <section className="mt-8">
@@ -144,6 +189,7 @@ export default function Home() {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone Number</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient Details</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Call Transcript</th>
               </tr>
             </thead>
@@ -152,11 +198,19 @@ export default function Home() {
                 callHistory.map((call) => {
                   const phoneNumber = call.call_ID.split('_')[1] || 'N/A';
                   const patientName = call.patient_info?.name || 'Unknown';
-                  
+                  const patientDetails = call.patient_info || 'N/A';
                   return (
                     <tr key={call.id}>
                       <td className="px-6 py-4 whitespace-nowrap">{phoneNumber}</td>
                       <td className="px-6 py-4 whitespace-nowrap">{patientName}</td>
+                      <td className="px-6 py-4">
+                        <button 
+                          onClick={() => showPatientInfo(call.patient_info)}
+                          className="text-blue-600 hover:text-blue-800 underline"
+                        >
+                          View Details
+                        </button>
+                      </td>
                       <td className="px-6 py-4">
                         <button 
                           onClick={() => showTranscript(call.call_logs)}
