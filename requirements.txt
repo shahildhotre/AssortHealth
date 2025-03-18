@@ -17,3 +17,4 @@ livekit-protocol
 livekit-plugins-turn-detector
 resend
 uvicorn
+supabase
